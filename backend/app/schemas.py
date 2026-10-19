@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.security import MAX_PASSWORD_BYTES
 
@@ -49,3 +49,48 @@ class DocumentOut(BaseModel):
     created_at: datetime
     # Se calcula en el controlador: True si el usuario autenticado subió el documento.
     is_owner: bool = False
+
+
+class ChatRequest(BaseModel):
+    question: str = Field(max_length=2000)
+    # Si se omite, se crea una conversación nueva.
+    conversation_id: uuid.UUID | None = None
+
+
+class SourceOut(BaseModel):
+    filename: str | None = None
+    document_id: str | None = None
+    chunk_index: int | None = None
+    excerpt: str
+    score: float
+
+
+class ChatResponse(BaseModel):
+    conversation_id: uuid.UUID
+    answer: str
+    sources: list[SourceOut]
+    answered: bool
+    language: str
+
+
+class MessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    role: str
+    content: str
+    sources: list[SourceOut]
+    answered: bool | None
+    created_at: datetime
+
+
+class ConversationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    title: str
+    created_at: datetime
+
+
+class ConversationDetail(ConversationOut):
+    messages: list[MessageOut]

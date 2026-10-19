@@ -47,6 +47,14 @@ class Settings(BaseSettings):
     # Carga de documentos
     max_upload_mb: int = 15
 
+    # CORS: orígenes del frontend separados por comas (vacío = sin CORS).
+    # Ejemplo: CORS_ORIGINS=http://localhost:5173,https://mi-front.vercel.app
+    cors_origins: str = ""
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip().rstrip("/") for o in self.cors_origins.split(",") if o.strip()]
+
 
 @lru_cache
 def get_settings() -> Settings:
