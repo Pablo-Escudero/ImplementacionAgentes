@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-yellow: #FCEE0A;
+  --crimson-red: #E8213C;
+  --dark-bg: #1A0509;
+  --panel-bg: #3A0A12;
+}
+
+body {
+  background-color: var(--dark-bg);
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  margin: 0;
+  background-image: 
+    linear-gradient(rgba(252, 238, 10, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(252, 238, 10, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+h1, h2, h3, h4, h5, h6, .tag-label {
+  font-family: 'Orbitron', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Esquinas biseladas estilo Cyberpunk */
+.cyber-panel {
+  background-color: var(--panel-bg);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+  border-left: 2px solid var(--neon-yellow);
+  padding: 1rem;
+}
+
+.cyber-button {
+  background-color: var(--neon-yellow);
+  color: black;
+  font-weight: bold;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  transition: all 0.2s;
+}
+.cyber-button:hover {
+  background-color: white;
+  transform: translateY(-2px);
+}
+
+.cyber-input {
+  background-color: rgba(0,0,0,0.5);
+  border: 1px solid var(--neon-yellow);
+  color: white;
+  padding: 0.5rem;
+  outline: none;
+  font-family: 'Rajdhani', sans-serif;
+}
+.cyber-input:focus {
+  box-shadow: 0 0 10px var(--neon-yellow);
+}
+
+.chat-message-user {
+  background-color: var(--neon-yellow);
+  color: black;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
+  align-self: flex-end;
+  padding: 0.75rem 1rem;
+  max-width: 80%;
+  font-weight: 500;
+}
+
+.chat-message-agent {
+  background-color: var(--panel-bg);
+  border: 1px solid var(--crimson-red);
+  color: white;
+  align-self: flex-start;
+  padding: 0.75rem 1rem;
+  max-width: 80%;
+}
+
+.chat-message-error {
+  background-color: rgba(232, 33, 60, 0.1);
+  border: 1px solid var(--crimson-red);
+  color: white;
+  align-self: flex-start;
+  padding: 1rem;
+  max-width: 80%;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}

@@ -2,7 +2,7 @@
 
 Flujo:
     validate_intent -> retrieve -> grade_context -> generate -> save_history
-                  \\__________________\\__ reject __________/
+                  \__________________\__ reject __________/
 
 Estrategias anti-alucinación: umbral de similitud (grade_context), nodo dedicado a validar
 el contexto, prompt que obliga a usar solo lo recuperado, marcador NO_INFO del modelo,
@@ -35,13 +35,15 @@ from app.vectorstore.store import get_vector_store
 logger = logging.getLogger("app.agent")
 
 MIN_QUESTION_CHARS = 3
+MAX_QUESTION_CHARS = 500
+EXCERPT_CHARS = 200
+NUM_CTX = 4096
+
+# Preguntas fuera de dominio conocidas (para evitar alucinaciones por similitud alta)
 BLOCKLIST = [
     "witcher", "geralt", "blade runner", "neuromancer", "harry potter", 
     "elden ring", "sushi", "fútbol", "capital of france", "python"
 ]
-MAX_QUESTION_CHARS = 500
-EXCERPT_CHARS = 200
-NUM_CTX = 4096
 
 
 class AgentState(TypedDict, total=False):
@@ -84,24 +86,10 @@ def validate_intent(state: AgentState) -> AgentState:
     domain_valid = True
     
     if valid:
-        # 1. Filtro determinista (Blocklist)
+        # Filtro determinista (Blocklist) para preguntas problematicas conocidas
         q_lower = question.lower()
         if any(word in q_lower for word in BLOCKLIST):
             domain_valid = False
-        else:
-            # 2. Filtro LLM (para preguntas no listadas)
-            prompt = (
-                "Answer strictly YES or NO. Is the following question about the Cyberpunk franchise "
-                "(Cyberpunk 2077, Phantom Liberty, Cyberpunk: Edgerunners, Cyberpunk tabletop RPG, "
-                "its characters, lore, or locations)?\n"
-                f"Question: {question}"
-            )
-            try:
-                reply = get_llm().invoke(prompt).content.strip().upper()
-                if "NO" in reply and "YES" not in reply:
-                    domain_valid = False
-            except Exception as e:
-                logger.error("Error en validación de intención: %s", e)
             
     return {"question": question, "language": language, "valid": valid, "domain_valid": domain_valid}
 
@@ -221,6 +209,7 @@ def save_history(state: AgentState, config: RunnableConfig) -> AgentState:
 
 
 # ----------------------------------------------------------------------------- grafo
+
 
 def _after_validate(state: AgentState) -> str:
     if not state.get("valid", False):
