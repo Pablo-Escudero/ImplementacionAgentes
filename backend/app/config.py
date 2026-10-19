@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     top_k: int = 4
     similarity_threshold: float = 0.5
 
+    # Carga de documentos
+    max_upload_mb: int = 15
+
 
 @lru_cache
 def get_settings() -> Settings:

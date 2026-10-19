@@ -35,3 +35,17 @@ class UserOut(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class DocumentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    filename: str
+    content_type: str
+    size_bytes: int
+    chunk_count: int
+    owner_id: uuid.UUID
+    created_at: datetime
+    # Se calcula en el controlador: True si el usuario autenticado subió el documento.
+    is_owner: bool = False
