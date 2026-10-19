@@ -2,7 +2,7 @@
 
 Aplicacion web de tipo agente inteligente construida con FastAPI, LangChain y LangGraph. El agente responde preguntas en espanol e ingles sobre la franquicia Cyberpunk (Cyberpunk 2077, Phantom Liberty, Edgerunners, comics y juego de rol de mesa), fundamentando sus respuestas exclusivamente en una base de conocimiento vectorial local (PostgreSQL + pgvector) y utilizando un modelo de lenguaje local ejecutado con Ollama.
 
-Integrantes: [Nombre Integrante 1], [Nombre Integrante 2]
+Integrantes: Pablo Escudero, Laura Chavarriaga y Juan Pablo Monsalve.
 
 ## Arquitectura del Sistema
 
