@@ -114,4 +114,4 @@ Asegurese de incluir imagenes en la carpeta docs/capturas/ y enlazarlas aqui:
 - Inicio de sesion.
 - Chat con respuesta fundamentada y fuentes.
 - Rechazo de pregunta fuera de dominio.
-- Carga de documento.
+- Carga de documento
