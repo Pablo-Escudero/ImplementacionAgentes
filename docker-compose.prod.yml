@@ -1,0 +1,53 @@
+# Producción (EC2). Servicios: db (pgvector), backend (FastAPI) y caddy (HTTPS).
+# Solo caddy publica puertos; db y backend quedan en la red interna de Docker.
+# Uso (desde la raíz del repo, con el archivo .env creado a partir de deploy/env.production.example):
+#   docker compose -f docker-compose.prod.yml up -d --build
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:?Define PG_PASSWORD en .env}
+      POSTGRES_DB: ${PG_DB:-cyberpunk_agent}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${PG_DB:-cyberpunk_agent}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      # Dentro de la red de Docker la base es el servicio "db" en su puerto interno.
+      PG_HOST: db
+      PG_PORT: "5432"
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    environment:
+      DOMAIN: ${DOMAIN:?Define DOMAIN en .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

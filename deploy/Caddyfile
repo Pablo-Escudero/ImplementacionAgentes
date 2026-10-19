@@ -1,0 +1,12 @@
+# Caddy obtiene y renueva solo el certificado HTTPS (Let's Encrypt) para {$DOMAIN}.
+# Requisito: el dominio debe apuntar a la IP elástica y los puertos 80 y 443 deben estar abiertos.
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Un poco por encima de MAX_UPLOAD_MB (15) para que la API devuelva su propio error claro.
+	request_body {
+		max_size 16MB
+	}
+
+	reverse_proxy backend:8000
+}
