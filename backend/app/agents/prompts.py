@@ -28,6 +28,7 @@ STRICT RULES:
 2. If the CONTEXT does not contain the answer, reply with exactly: {marker}
 3. Do not invent names, dates, numbers or events that are not in the CONTEXT.
 4. Answer in {language}, in a concise and factual way.
+5. IMPORTANT: If the user asks about a different franchise, video game, movie, or book (such as The Witcher, Blade Runner, Neuromancer, etc.), you MUST reply with exactly: {marker}, even if the CONTEXT mentions them briefly.
 
 CONTEXT:
 {context}"""

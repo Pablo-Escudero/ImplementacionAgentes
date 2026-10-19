@@ -1,119 +1,117 @@
-# Agente RAG sobre Cyberpunk 2077
+﻿# Cyberpunk RAG Agent
 
-Backend de un agente inteligente que responde preguntas sobre la franquicia
-Cyberpunk 2077 (videojuego, Phantom Liberty, Edgerunners y material relacionado)
-a partir de una base de conocimiento propia almacenada en una base de datos vectorial.
+Aplicacion web de tipo agente inteligente construida con FastAPI, LangChain y LangGraph. El agente responde preguntas en espanol e ingles sobre la franquicia Cyberpunk (Cyberpunk 2077, Phantom Liberty, Edgerunners, comics y juego de rol de mesa), fundamentando sus respuestas exclusivamente en una base de conocimiento vectorial local (PostgreSQL + pgvector) y utilizando un modelo de lenguaje local ejecutado con Ollama.
 
-El agente se construye con **LangChain** y **LangGraph**, usa un modelo de lenguaje
-**local con Ollama** y responde únicamente con la información recuperada de la base
-vectorial. Cuando no hay contexto suficiente, rechaza la pregunta de forma explícita.
+Integrantes: [Nombre Integrante 1], [Nombre Integrante 2]
 
-> Estado: **fase 2** (autenticación con JWT). Las demás fases se
-> documentan aquí a medida que se completan.
+## Arquitectura del Sistema
 
-## Estructura
+El flujo de la aplicacion es el siguiente:
+1. Frontend (React) se comunica con el Backend (FastAPI).
+2. El backend gestiona la autenticacion (JWT), la carga de documentos y el historial.
+3. El Agente (LangGraph) procesa la pregunta, recupera contexto de la base vectorial, valida la informacion y genera una respuesta.
+4. El Modelo Local (Ollama) ejecuta el LLM (qwen2.5:3b) y los embeddings (bge-m3).
+5. La Base de Datos (PostgreSQL + pgvector) almacena los fragmentos vectorizados.
 
-```
-implementacionAgentes/
-├── backend/
-│   ├── app/
-│   │   ├── agents/        # grafo de LangGraph
-│   │   ├── controllers/   # endpoints de la API
-│   │   ├── services/      # lógica de negocio
-│   │   └── vectorstore/   # acceso a pgvector
-│   ├── requirements.txt
-│   └── README.md
-├── docs/                  # diagrama de arquitectura y capturas
-├── docker-compose.yml     # PostgreSQL + pgvector
-├── .env.example
-└── README.md
-```
+El diagrama detallado se encuentra en docs/arquitectura.png.
 
-La carpeta `frontend/` la desarrolla otra parte del equipo y se agregará al repo después.
+## Tecnologias Utilizadas
 
-## Requisitos
+- Backend: Python 3.11, FastAPI, SQLAlchemy, PyJWT, Bcrypt.
+- Agente: LangChain, LangGraph, Ollama (qwen2.5:3b para chat, bge-m3 para embeddings).
+- Base de Datos: PostgreSQL 17 con extension pgvector (Docker).
+- Despliegue: AWS (Backend), DuckDNS, Tunel SSH (para conectar con Ollama local).
+- Frontend: [Mencionar tecnologia del frontend, ej. React / Next.js].
 
-- Python 3.11 o superior
+## Ejecucion Local
+
+### Prerrequisitos
+- Python 3.11
 - Docker Desktop
-- Ollama (modelos `qwen2.5:3b` y `bge-m3`)
+- Ollama instalado y ejecutandose.
+- Git
 
-## Ejecución local (Windows, PowerShell)
+### Pasos
 
-1. Crear el entorno virtual e instalar dependencias:
+1. Clonar el repositorio:
+   git clone https://github.com/Pablo-Escudero/ImplementacionAgentes.git
+   cd ImplementacionAgentes
 
-   ```powershell
+2. Configurar el entorno virtual e instalar dependencias:
    python -m venv .venv
-   .venv\Scripts\Activate.ps1
+   En Windows:
+   .venv\Scripts\activate
+   En Linux/Mac:
+   source .venv/bin/activate
+   
    pip install -r backend/requirements.txt
-   ```
 
-2. Crear la configuración local:
-
-   ```powershell
-   Copy-Item .env.example .env
-   ```
-
-   Edita `.env` y cambia al menos `JWT_SECRET`.
-
-3. Levantar la base de datos:
-
-   ```powershell
-   docker compose up -d
-   ```
-
-   La base queda en `localhost:5433` (el puerto 5433 evita chocar con un PostgreSQL
-   local instalado en el 5432).
-
-4. Instalar los modelos locales con Ollama:
-
-   ```powershell
+3. Descargar los modelos en Ollama:
    ollama pull qwen2.5:3b
    ollama pull bge-m3
-   ```
 
-5. Arrancar el backend (con el entorno virtual activo):
+4. Levantar la base de datos vectorial (PostgreSQL):
+   docker-compose up -d
+   Esto levantara el contenedor en el puerto 5434 (mapeado al 5432 interno).
 
-   ```powershell
+5. Configurar las variables de entorno:
+   Copia el archivo .env.example a .env en la raiz del proyecto y ajusta los valores si es necesario.
+   cp .env.example .env
+
+6. Cargar la base de conocimiento inicial (opcional si la BD ya tiene datos):
    cd backend
-   uvicorn app.main:app --reload
-   ```
+   python -m scripts.load_knowledge_base
 
-   Al arrancar, la app activa la extensión `vector` y crea las tablas `users`,
-   `documents`, `conversations` y `messages` si no existen.
+7. Ejecutar el backend:
+   cd backend
+   python -m uvicorn app.main:app --reload --port 8001
+   La API estara disponible en http://localhost:8001. La documentacion Swagger estara en /docs (si ENABLE_DOCS=True).
 
-## Autenticación
+## Despliegue en la Nube
 
-La API usa tokens JWT (Bearer). Solo `POST /auth/register` y `POST /auth/login` son
-públicos; el resto de endpoints, incluido `GET /health`, exigen un token válido.
+El backend esta desplegado en AWS y es accesible publicamente en:
+URL del Backend: https://cyberpunk-api.duckdns.org
 
-| Endpoint | Acceso | Descripción |
-|---|---|---|
-| `POST /auth/register` | Público | Crea un usuario (`email` y `password` de 8 a 72 bytes) |
-| `POST /auth/login` | Público | Formulario OAuth2 (`username` = correo, `password`); devuelve el token |
-| `GET /auth/me` | Token | Datos del usuario autenticado |
-| `GET /health` | Token | Estado del servicio y de la base de datos |
+Nota sobre el despliegue:
+Debido a que el modelo de lenguaje se ejecuta localmente (Ollama) por limitaciones de recursos en la capa gratuita de AWS, el backend en la nube se conecta a traves de un tunel SSH seguro al Ollama que corre en la maquina local del equipo. Por lo tanto, para que el backend publico funcione, el tunel debe estar activo.
 
-El token dura `ACCESS_TOKEN_EXPIRE_MINUTES` (60 por defecto). Para cerrar sesión, el
-cliente descarta el token. Con `ENABLE_DOCS=true`, Swagger queda en
-`http://127.0.0.1:8000/docs` (botón **Authorize** para probar con un usuario).
+### Variables de Entorno en Produccion (AWS)
+Las variables configuradas en el servicio de AWS son las mismas que en .env.example, pero apuntando a la base de datos y al tunel correspondiente.
 
-## Pruebas
+## Estrategias Anti-Alucinacion
 
-```powershell
-cd backend
-python -m pytest
-```
+El agente implementa cuatro capas de seguridad para evitar inventar informacion:
+1. Filtro de Intencion (Blocklist + LLM): Valida si la pregunta pertenece al dominio de Cyberpunk antes de buscar en la base de datos.
+2. Umbral de Similitud (grade_context): Solo se utilizan fragmentos recuperados con un score de similitud coseno mayor a 0.5.
+3. Prompt Estricto: El modelo tiene prohibido usar conocimiento externo y debe responder con el marcador NO_INFO si el contexto no es suficiente.
+4. Nodo de Rechazo Explicito: Si el modelo devuelve NO_INFO o el contexto no supera el umbral, el agente responde exactamente con: "No tengo suficiente informacion en mi base de conocimiento para responder esa pregunta."
 
-## Plan de trabajo
+## Estructura del Repositorio
 
-| Fase | Contenido | Estado |
-|---|---|---|
-| 0 | Esqueleto del repo, configuración y base de datos | Hecha |
-| 1 | Configuración, conexión y tablas | Hecha |
-| 2 | Autenticación (registro, login, JWT) | Hecha |
-| 3 | Vectorstore, carga y procesamiento de documentos | Pendiente |
-| 4 | Agente LangGraph | Pendiente |
-| 5 | Endpoints de chat e historial | Pendiente |
-| 6 | Carga inicial de la base de conocimiento | Pendiente |
-| 7 | Docker del backend y despliegue en AWS | Pendiente |
-| 8 | Pruebas, README completo y diagrama de arquitectura | Pendiente |
+proyecto-agente/
+  backend/
+    app/
+      agents/          Grafo LangGraph, prompts e idioma
+      controllers/     Endpoints de la API (auth, chat, docs)
+      services/        Logica de negocio
+      vectorstore/     Configuracion de pgvector
+      config.py        Configuracion de variables de entorno
+      models.py        Modelos SQLAlchemy
+      main.py          Punto de entrada FastAPI
+    scripts/           Scripts de carga y diagnostico
+    requirements.txt
+  frontend/            Codigo del frontend
+  docs/
+    arquitectura.png   Diagrama de arquitectura
+    capturas/          Evidencias de funcionamiento
+  docker-compose.yml   PostgreSQL + pgvector
+  .env.example         Ejemplo de variables de entorno
+  README.md
+
+## Capturas de Pantalla
+
+Asegurese de incluir imagenes en la carpeta docs/capturas/ y enlazarlas aqui:
+- Inicio de sesion.
+- Chat con respuesta fundamentada y fuentes.
+- Rechazo de pregunta fuera de dominio.
+- Carga de documento.

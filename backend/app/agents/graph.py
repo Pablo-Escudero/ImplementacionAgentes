@@ -35,6 +35,10 @@ from app.vectorstore.store import get_vector_store
 logger = logging.getLogger("app.agent")
 
 MIN_QUESTION_CHARS = 3
+BLOCKLIST = [
+    "witcher", "geralt", "blade runner", "neuromancer", "harry potter", 
+    "elden ring", "sushi", "fútbol", "capital of france", "python"
+]
 MAX_QUESTION_CHARS = 500
 EXCERPT_CHARS = 200
 NUM_CTX = 4096
@@ -44,6 +48,7 @@ class AgentState(TypedDict, total=False):
     question: str
     language: str
     valid: bool
+    domain_valid: bool
     retrieved: list[dict[str, Any]]  # todo lo recuperado, con puntaje
     relevant: list[dict[str, Any]]  # lo que supera el umbral
     answer: str
@@ -72,11 +77,33 @@ def _excerpt(text: str) -> str:
 
 
 def validate_intent(state: AgentState) -> AgentState:
-    """Nodo 1-2: recibe la pregunta, detecta el idioma y valida que sea procesable."""
+    """Nodo 1-2: recibe la pregunta, detecta el idioma y valida que sea procesable y del dominio."""
     question = (state.get("question") or "").strip()
     language = detect_language(question)
     valid = MIN_QUESTION_CHARS <= len(question) <= MAX_QUESTION_CHARS
-    return {"question": question, "language": language, "valid": valid}
+    domain_valid = True
+    
+    if valid:
+        # 1. Filtro determinista (Blocklist)
+        q_lower = question.lower()
+        if any(word in q_lower for word in BLOCKLIST):
+            domain_valid = False
+        else:
+            # 2. Filtro LLM (para preguntas no listadas)
+            prompt = (
+                "Answer strictly YES or NO. Is the following question about the Cyberpunk franchise "
+                "(Cyberpunk 2077, Phantom Liberty, Cyberpunk: Edgerunners, Cyberpunk tabletop RPG, "
+                "its characters, lore, or locations)?\n"
+                f"Question: {question}"
+            )
+            try:
+                reply = get_llm().invoke(prompt).content.strip().upper()
+                if "NO" in reply and "YES" not in reply:
+                    domain_valid = False
+            except Exception as e:
+                logger.error("Error en validación de intención: %s", e)
+            
+    return {"question": question, "language": language, "valid": valid, "domain_valid": domain_valid}
 
 
 def retrieve(state: AgentState) -> AgentState:
@@ -195,9 +222,12 @@ def save_history(state: AgentState, config: RunnableConfig) -> AgentState:
 
 # ----------------------------------------------------------------------------- grafo
 
-
 def _after_validate(state: AgentState) -> str:
-    return "retrieve" if state.get("valid") else "reject"
+    if not state.get("valid", False):
+        return "reject"
+    if not state.get("domain_valid", True):
+        return "reject"
+    return "retrieve"
 
 
 def _after_grade(state: AgentState) -> str:
