@@ -16,6 +16,12 @@ DEBE_RESPONDER = [
     "¿Qué es Night City?",
     "¿Qué es Phantom Liberty?",
     "Who is David Martinez in Edgerunners?",
+    "¿Qué es la cibersicosis?",
+    "What is the Blackwall?",
+    "¿Quién es Adam Smasher?",
+    "¿Qué es Dogtown?",
+    "¿Qué empresa desarrolló Cyberpunk 2077?",
+    "¿Quién es Mike Pondsmith?",
 ]
 
 DEBE_RECHAZAR = [
@@ -23,6 +29,11 @@ DEBE_RECHAZAR = [
     "¿Quién ganó el mundial de fútbol de 2018?",
     "What is the capital of France?",
     "¿Cómo se programa un bucle for en Python?",
+    "Who is Geralt of Rivia?",
+    "¿Quién escribió Neuromancer?",
+    "¿De qué trata Blade Runner?",
+    "¿Qué es The Witcher 3?",
+    "¿Cuándo salió Elden Ring?",
 ]
 
 
