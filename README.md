@@ -21,7 +21,7 @@ El diagrama detallado se encuentra en docs/arquitectura.png.
 - Agente: LangChain, LangGraph, Ollama (qwen2.5:3b para chat, bge-m3 para embeddings).
 - Base de Datos: PostgreSQL 17 con extension pgvector (Docker).
 - Despliegue: AWS (Backend), DuckDNS, Tunel SSH (para conectar con Ollama local).
-- Frontend: [Mencionar tecnologia del frontend, ej. React / Next.js].
+- Frontend: React.
 
 ## Ejecucion Local
 
